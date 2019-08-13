@@ -1,113 +1,187 @@
 
-const path = require('path');
-const Autoprefixer = require('autoprefixer');
+// const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+
+const path = require("path");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const ip = require('ip').address();
+const webpack = require("webpack");
+
+const today = new Date();
+const Ddigit = _n => _n > 9 ? _n : "0" + _n;
+const appVersion = `v${today.getFullYear()}${Ddigit(today.getMonth() + 1)}${Ddigit(today.getDate())}`;
+
+const postcssPlugins = {
+    plugins: [
+        require('autoprefixer')(),
+        require('postcss-aspect-ratio-mini')(),
+        require('postcss-write-svg')({ utf8: false }),
+        // require('postcss-px-to-viewport')({
+        //     viewportWidth: 750, // 视窗的宽度，对应的是我们设计稿的宽度，一般是750 
+        //     viewportHeight: 1334, // 视窗的高度，根据750设备的宽度来指定，一般指定1334，也可以不配置 
+        //     unitPrecision: 3, // 指定`px`转换为视窗单位值的小数位数（很多时候无法整除） 
+        //     viewportUnit: 'vw', // 指定需要转换成的视窗单位，建议使用vw 
+        //     selectorBlackList: ['.ignore', '.hairlines'], // 指定不转换为视窗单位的类，可以自定义，可以无限添加,建议定义一至两个通用的类名 
+        //     minPixelValue: 1, // 小于或等于`1px`不转换为视窗单位，你也可以设置为你想要的值 
+        //     mediaQuery: false // 允许在媒体查询中转换`px`
+        // }),
+    ]
+}
 
 module.exports = {
     // 这里应用程序开始执行
 
     // webpack 开始打包
-    entry: './app/index.js', // string | object | array
+    entry: { // string | object | array
+        app: [path.resolve(__dirname, 'src/index.js')],
+    },
 
     // webpack 如何输出结果的相关选项
     output: {
-        path: path.resolve(__dirname, 'dist'),    // 所有输出文件的目标路径 必须是绝对路径（使用 Node.js 的 path 模块）
-        filename: '[name].[chunkhash:8].chunk.js',   //用于长效缓存 内容没有改变时候不会更新hash
-        publicPath: '.', // 输出解析文件的目录，url 相对于 HTML 页面
+        path: path.resolve(__dirname, 'dist'), // 所有输出文件的目标路径 必须是绝对路径（使用 Node.js 的 path 模块）
+        filename: 'js/[name].[hash].js',
+        chunkFilename: 'js/[name].[chunkhash].js', //用于长效缓存 内容没有改变时候不会更新hash
+        publicPath: "" // 输出解析文件的目录，url 相对于 HTML 页面
     },
 
     module: {
         // 模块规则（配置 loader、解析器等选项）
-        rules: [ 
+        rules: [
             {
-                test: /\.(ts|tsx|js|jsx)$/,
-                exclude: ['/node_modules'],
-                loader: 'babel-loader', // js 代码解析器
-                options: {
-                    presets: [
-                        [ // 根据运行目标注入polyfill
-                            "@babel/preset-env",
-                            // {
-                            //   "useBuiltIns": "usage", // 可以在运行时候注入引用的api对应的polyfill
-                            //   "corejs":3, // 对应使用corejs库版本
-                            //   "debug": true, // 打印出注入与目标识别的log
-                            // }
-                        ],
-                        // "@babel/preset-react"
-                    ],
-                    // plugins: [
-                    //     // 解析类的属性,如es7修饰器
-                    //     ["@babel/plugin-proposal-decorators", { "legacy": true }],
-                    //     "transform-class-properties", // 解决 es6 中使用class声明中 ：defaultProps={} 不支持的问题
-                    //     "@babel/plugin-syntax-dynamic-import", // 支持import() 动态引入
-                    //     "@babel/plugin-transform-react-jsx" // 转化jsx语法
-                    // ],
-                    compact: true,
-                    cacheDirectory: true
-                }
+                test: /\.json$/,  //用于匹配loaders所处理文件拓展名的正则表达式
+                use: 'json-loader', //具体loader的名称
+                type: 'javascript/auto',
+                exclude: /node_modules/
             },
+            // {
+            //     test: /\.js$/,
+            //     use: [{
+            //         loader: 'eslint-loader',
+            //         options: { // 这里的配置项参数将会被传递到 eslint 的 CLIEngine 
+            //             formatter: require('eslint-friendly-formatter') // 指定错误报告的格式规范
+            //         }
+            //     }],
+            //     enforce: "pre", // 编译前检查
+            //     exclude: [/node_modules/], // 不检测的文件
+            //     include: [path.resolve(__dirname, 'src')], // 指定检查的目录
+            // },
             {
-                test: /\.less$/,
-                exclude: ['/node_modules'],
-                use: [
-                    // 生产模式，抽离注入在js的less代码
-                    // devMode ? 'style-loader' :
-                    //     {
-                    //         loader: MiniCssExtractPlugin.loader,
-                    //         options: {
-                    //             publicPath: '../'
-                    //         }
-                    //     },
-                    'css-loader', // 解释(interpret) @import 和 url() ，会 import/require() 后再解析(resolve)它们
-                    { // css预处理器
-                        loader: 'postcss-loader',
-                        options: { plugins: [Autoprefixer] } // 注入css 兼容写法
+                test: /\.(js|jsx)$/,
+                use: [{
+                    loader: 'babel-loader',
+                    options: {// options、query不能和loader数组一起使用
+                        cacheDirectory: true// 利用缓存，提高性能，babel is slow
                     },
-                    'less-loader', // less 代码转化
+                }],
+                include: path.resolve(__dirname, 'src'),
+
+            },
+            {// 编译less
+                test: /\.less$/,
+                use: [
+                    {
+                        loader: 'style-loader',
+                    },
+                    {
+                        loader: 'css-loader', // 解释(interpret) @import 和 url() ，会 import/require() 后再解析(resolve)它们
+                        options: {
+                            importLoaders: 1,
+                        }
+                    },
+                    {
+                        loader: 'postcss-loader', // css预处理器
+                        options: {
+                            plugins: postcssPlugins, // 注入css 兼容写法
+                            parser: 'postcss-less',
+                            sourceMap: true,
+                        }
+                    },
+                    {
+                        loader: 'less-loader',
+                        options: {
+                            sourceMap: true,
+                        }
+                    }
+                ]
+            },
+            {   // 编译scss
+                test: /\.scss$/,
+                use: [
+                    {
+                        loader: 'style-loader',
+                    },
+                    {
+                        loader: 'css-loader',
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            plugins: postcssPlugins,
+                            parser: 'postcss-scss',
+                            sourceMap: true,
+                        }
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: { sourceMap: true }
+                    },
+                    {
+                        loader: 'sass-resources-loader',
+                        options: {
+                            sourceMap: true,
+                        }
+                    }
                 ],
+                exclude: /node_modules/
             },
             {
                 test: /\.css$/,
-                exclude: ['/node_modules'],
-                use: ['style-loader', 'css-loader', 'postcss-loader']
+                use: [
+                    { loader: 'style-loader' },
+                    { loader: 'css-loader' },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            plugins: postcssPlugins,
+                            sourceMap: true,
+                        }
+                    }
+                ]
             },
-            { // 处理js注入的图片文件（require（'assets/logo.png'））,
-                // 构建后生成在 dist/assets/logo.hash.png , 代码中注入引用路径
-                test: /\.(jpe?g|png|gif|svg)$/i,
-                exclude: ['/node_modules'],
-                loader: 'file-loader',
-                options: {
-                    limit: 8192,
-                    name: '[name].[hash:8].[ext]',
-                    publicPath: 'assets',
-                }
+            { // 处理js注入的图片文件（require（'images/logo.png'））,
+                // 构建后生成在 dist/images/logo.hash.png , 代码中注入引用路径
+                test: /\.(png|jp?g|gif|svg|ico)$/,
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192,        // 小于8192字节的图片打包成base 64图片
+                            name: 'images/[name].[hash:8].[ext]',
+                            publicPath: ''
+                        }
+                    },
+                ]
             },
-            { // 同上
-                test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-                exclude: ['/node_modules'],
-                loader: 'url-loader',
-                options: {
-                    limit: 10000,
-                    prefix: 'fonts',
-                    name: '[name].[hash:8].[ext]',
-                    mimetype: 'application/font-woff',
-                    publicPath: 'assets',
-                }
-                // use: 'url-loader??prefix=fonts/name=assets/[name].[hash:8].[ext]&limit=10000&mimetype=application/font-woff'
+            { // 文件依赖配置项——字体图标
+                test: /\.(woff|woff2|svg|eot|ttf)$/,
+                use: [{
+                    loader: 'file-loader',
+                    options: {
+                        limit: 8192,
+                        name: 'fonts/[name].[ext]?[hash:8]',
+                        publicPath: ''
+                    },
+                }],
             },
-            { // 同上
-                test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-                exclude: ['/node_modules'],
-                loader: 'file-loader',
-                options: {
-                    limit: 10000,
-                    prefix: 'fonts',
-                    name: '[name].[hash:8].[ext]',
-                    mimetype: 'font/opentype',
-                    publicPath: 'assets',
-                }
-                // use: 'file-loader?prefix=fonts/&name=assets/[name].[hash:8].[ext]&limit=10000&mimetype=font/opentype'
+            { // 文件依赖配置项——视频
+                test: /\.(ogg|mpeg4|webm)?$/,
+                use: [{
+                    loader: 'file-loader',
+                    options: {
+                        limit: 8192,
+                        name: 'videos/[name].[ext]?[hash:8]',
+                        publicPath: ''
+                    },
+                }],
             }
         ]
     },
@@ -138,11 +212,30 @@ module.exports = {
 
     plugins: [
         //在dist下生成index.html,多个入口会合并在该html以script标签引入
-        new HtmlWebpackPlugin(),
-        // 抽离注入在js的css代码，构建后生成 dist/css 下，线上环境最好抽离css，避免产生运行错误
-        new MiniCssExtractPlugin({
-            filename: "css/[name].css",
-            chunkFilename: "css/[name].[contenthash:8].css"
+        new HtmlWebpackPlugin({
+            filename: 'index.html',// 输出文件的名称
+            template: path.resolve(__dirname, 'src/index.html'),// 模板文件的路径
+            title: 'webpack4-base',// 配置生成页面的标题
+            minify: {
+                removeRedundantAttributes: true, // 删除多余的属性
+                collapseWhitespace: true, // 折叠空白区域
+                removeAttributeQuotes: true, // 移除属性的引号
+                removeComments: true, // 移除注释
+                collapseBooleanAttributes: true // 省略只有 boolean 值的属性值 例如：readonly checked
+            },
+            appVersion
         }),
-    ]
+
+    ],
+
+    resolve: {
+        // 设置可省略文件后缀名
+        extensions: [' ', '.js', '.json', '.jsx', '.vue'],
+        // 查找 module 的话从这里开始查找;
+        modules: [path.resolve(__dirname, "src"), path.resolve(__dirname, "node_modules")], // 绝对路径;
+        // 配置路径映射（别名）
+        alias: {
+            '@': path.resolve('src'),
+        }
+    }
 }
