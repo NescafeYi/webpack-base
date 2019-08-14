@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports":true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*","src/*/index.js"],
+    }
+  },
+  "include": ["src"]
+}

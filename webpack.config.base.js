@@ -1,31 +1,16 @@
 
-// const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 const path = require("path");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ip = require('ip').address();
 const webpack = require("webpack");
+const { postcssPlugins } = require('./webpack.utils');
+const devMode = process.env.NODE_ENV !== 'production';
 
 const today = new Date();
 const Ddigit = _n => _n > 9 ? _n : "0" + _n;
 const appVersion = `v${today.getFullYear()}${Ddigit(today.getMonth() + 1)}${Ddigit(today.getDate())}`;
-
-const postcssPlugins = {
-    plugins: [
-        require('autoprefixer')(),
-        require('postcss-aspect-ratio-mini')(),
-        require('postcss-write-svg')({ utf8: false }),
-        // require('postcss-px-to-viewport')({
-        //     viewportWidth: 750, // 视窗的宽度，对应的是我们设计稿的宽度，一般是750 
-        //     viewportHeight: 1334, // 视窗的高度，根据750设备的宽度来指定，一般指定1334，也可以不配置 
-        //     unitPrecision: 3, // 指定`px`转换为视窗单位值的小数位数（很多时候无法整除） 
-        //     viewportUnit: 'vw', // 指定需要转换成的视窗单位，建议使用vw 
-        //     selectorBlackList: ['.ignore', '.hairlines'], // 指定不转换为视窗单位的类，可以自定义，可以无限添加,建议定义一至两个通用的类名 
-        //     minPixelValue: 1, // 小于或等于`1px`不转换为视窗单位，你也可以设置为你想要的值 
-        //     mediaQuery: false // 允许在媒体查询中转换`px`
-        // }),
-    ]
-}
 
 module.exports = {
     // 这里应用程序开始执行
@@ -78,9 +63,7 @@ module.exports = {
             {// 编译less
                 test: /\.less$/,
                 use: [
-                    {
-                        loader: 'style-loader',
-                    },
+                    { loader: devMode ? 'style-loader' : MiniCssExtractPlugin.loader },
                     {
                         loader: 'css-loader', // 解释(interpret) @import 和 url() ，会 import/require() 后再解析(resolve)它们
                         options: {
@@ -90,7 +73,7 @@ module.exports = {
                     {
                         loader: 'postcss-loader', // css预处理器
                         options: {
-                            plugins: postcssPlugins, // 注入css 兼容写法
+                            plugins: postcssPlugins.plugins, // 注入css 兼容写法
                             parser: 'postcss-less',
                             sourceMap: true,
                         }
@@ -106,16 +89,14 @@ module.exports = {
             {   // 编译scss
                 test: /\.scss$/,
                 use: [
-                    {
-                        loader: 'style-loader',
-                    },
+                    { loader: devMode ? 'style-loader' : MiniCssExtractPlugin.loader },
                     {
                         loader: 'css-loader',
                     },
                     {
                         loader: 'postcss-loader',
                         options: {
-                            plugins: postcssPlugins,
+                            plugins: postcssPlugins.plugins,
                             parser: 'postcss-scss',
                             sourceMap: true,
                         }
@@ -128,6 +109,9 @@ module.exports = {
                         loader: 'sass-resources-loader',
                         options: {
                             sourceMap: true,
+                            resources: [
+                                path.resolve(__dirname, 'src/sass/index.scss'),
+                            ]
                         }
                     }
                 ],
@@ -136,12 +120,12 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: [
-                    { loader: 'style-loader' },
+                    { loader: devMode ? 'style-loader' : MiniCssExtractPlugin.loader },
                     { loader: 'css-loader' },
                     {
                         loader: 'postcss-loader',
                         options: {
-                            plugins: postcssPlugins,
+                            plugins: postcssPlugins.plugins,
                             sourceMap: true,
                         }
                     }
@@ -223,7 +207,7 @@ module.exports = {
                 removeComments: true, // 移除注释
                 collapseBooleanAttributes: true // 省略只有 boolean 值的属性值 例如：readonly checked
             },
-            appVersion
+            version: appVersion
         }),
 
     ],
