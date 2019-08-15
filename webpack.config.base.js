@@ -156,7 +156,7 @@ module.exports = {
                 }],
             },
             { // 文件依赖配置项——视频
-                test: /\.(ogg|mpeg4|webm)?$/,
+                test: /\.(ogg|mpeg4|webm|mp4)?$/,
                 use: [{
                     loader: 'file-loader',
                     options: {
