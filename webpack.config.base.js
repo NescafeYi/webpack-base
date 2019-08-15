@@ -1,10 +1,9 @@
 
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-
 const path = require("path");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ip = require('ip').address();
 const webpack = require("webpack");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const { postcssPlugins } = require('./webpack.utils');
 const devMode = process.env.NODE_ENV !== 'production';
 

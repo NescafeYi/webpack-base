@@ -41,10 +41,8 @@ module.exports = merge(common, {
         // 展示出打包后的各个bundle所依赖的模块,需要的时候打开，构建时会自动打开
         // new BundleAnalyzerPlugin(),
 
-        // 跳过编译时出错的代码并记录，使编译后运行时的包不会发生错误c
+        // 跳过编译时出错的代码并记录，使编译后运行时的包不会发生错误
         new webpack.NoEmitOnErrorsPlugin(),
-
-        // 友好的终端错误显示方式
 
     ]
 });

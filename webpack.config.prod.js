@@ -5,7 +5,7 @@ const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const common = require('./webpack.config.base');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const {postcssPlugins} = require('./webpack.utils');
+const { postcssPlugins } = require('./webpack.utils');
 
 
 var webpackConfigProd = merge(common, {
@@ -15,6 +15,31 @@ var webpackConfigProd = merge(common, {
 
     // 不设加快构建速度，同时不会生成source map，需要调试线上的打包时打开
     // devtool: 'eval-source-map',  
+
+    module: {
+        rules: [{ // 压缩图片文件
+            test: /\.(jpe?g|png|gif|svg)$/i,
+            use: [{
+                loader: 'image-webpack-loader',
+                options: {
+                    optipng: {
+                        optimizationLevel: 7
+                    },
+                    gifsicle: {
+                        interlaced: false
+                    },
+                    pngquant: {
+                        quality: '65-90',
+                        speed: 4
+                    },
+                    mozjpeg: {
+                        quality: 65,
+                        progressive: true
+                    }
+                }
+            }]
+        }]
+    },
 
     plugins: [
         // 在构建之前把dist清空
