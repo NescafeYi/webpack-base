@@ -190,7 +190,11 @@ module.exports = {
                     reuseExistingChunk: true
                 }
             }
-        }
+        },
+        // 将包含chunks映射关系的list单独从app.js里提取出来
+        runtimeChunk: {
+            name: 'manifest'
+        },
     },
 
     plugins: [

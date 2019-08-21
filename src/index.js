@@ -29,7 +29,11 @@ function component() {
 
           </br>
           <h4>视频测试</h4>
-          <video controls="" autoplay="" name="media"><source src='./assets/videos/banner4-1.mp4' type="video/mp4"></video>
+          <video controls="" autoplay="" name="media"><source src=${require('@/assets/videos/banner4-1.mp4')} type="video/mp4"></video>
+
+          </br>
+          <h4>svg文件测试</h4>
+          <embed src=${require('@/assets/images/gen.svg')} type="image/svg+xml"/>
       </div>
     `;
 
